@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel do tatuador · Tatuo</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/tatuo.css">
+  <script type="module" src="/js/painel.js"></script>
+</head>
+<body>
+  <main id="conteudo" class="contido">
+    <form class="cartao login" id="form-login" hidden novalidate>
+      <div>
+        <p class="sobretitulo">Para tatuadores</p>
+        <h1 style="font-size:2.2rem">Seu painel</h1>
+        <p style="color:var(--tinta-2);margin-top:8px">Veja os pedidos que chegaram, mande propostas e publique flashes.</p>
+      </div>
+      <label class="campo">E-mail<input name="email" type="email" autocomplete="username" required></label>
+      <label class="campo">Senha<input name="senha" type="password" autocomplete="current-password" required></label>
+      <p class="erro" id="erro-login" role="alert"></p>
+      <button class="botao primario" type="submit">Entrar</button>
+      <p class="nota-ia">Demonstração: <span class="mono">marina-duarte@exemplo.com</span> (ou qualquer tatuador do catálogo, trocando o nome). A senha está no README.</p>
+    </form>
+
+    <section class="painel" id="painel" hidden>
+      <div class="secao-topo" style="margin:0">
+        <div>
+          <p class="sobretitulo" id="painel-estudio"></p>
+          <h1 style="font-size:clamp(2rem,1.4rem + 2vw,3rem)" id="painel-nome"></h1>
+        </div>
+        <div style="display:flex;gap:8px">
+          <a class="botao contorno pequeno" id="ver-perfil">Ver meu perfil</a>
+          <button class="botao fantasma pequeno" id="sair">Sair</button>
+        </div>
+      </div>
+      <div class="abas" role="tablist">
+        <button class="aba" role="tab" data-aba="abertos" aria-selected="true">Pedidos abertos <span class="contador" id="cont-abertos" hidden></span></button>
+        <button class="aba" role="tab" data-aba="aceito" aria-selected="false">Combinados</button>
+        <button class="aba" role="tab" data-aba="encerrados" aria-selected="false">Encerrados</button>
+        <button class="aba" role="tab" data-aba="flashes" aria-selected="false">Meus flashes</button>
+      </div>
+      <div id="conteudo-aba"></div>
+    </section>
+  </main>
+</body>
+</html>

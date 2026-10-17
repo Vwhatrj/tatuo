@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pedir orçamento · Tatuo</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/tatuo.css">
+  <script type="module" src="/js/pedido.js"></script>
+</head>
+<body>
+  <main id="conteudo" class="contido pedido">
+    <aside class="pedido-lado">
+      <div class="cartao pedido-tatuador" id="pedido-tatuador"></div>
+      <ol class="etapas" id="etapas" aria-label="Etapas do pedido"></ol>
+    </aside>
+
+    <form id="form-pedido" novalidate>
+      <!-- I. Referência -->
+      <section class="etapa" data-etapa="0">
+        <div class="etapa-titulo"><span class="romano">I.</span><h2 id="titulo-ref">Sua referência</h2></div>
+        <p class="etapa-texto" id="texto-ref">Mande uma imagem do que você quer, ou descreva a ideia. A IA analisa o estilo para o tatuador.</p>
+        <div id="bloco-flash" hidden></div>
+        <div id="bloco-ref" class="duas-colunas">
+          <div class="soltar" id="soltar-ref">
+            <label class="soltar-linha" for="arquivo-ref" style="cursor:pointer">
+              <span class="soltar-icone" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></span>
+              <span><b>Escolher imagem</b><small>JPG, PNG ou WebP, até 5 MB</small></span>
+            </label>
+            <input type="file" id="arquivo-ref" accept="image/jpeg,image/png,image/webp" hidden>
+            <div class="analise-img" id="ref-previa" hidden><img id="ref-img" alt="Sua referência"></div>
+            <span class="ou">e/ou descreva</span>
+            <textarea name="descricao" id="descricao" maxlength="500" placeholder="Ex.: um sapo com asas, traço grosso, com um pouco de vermelho"></textarea>
+          </div>
+          <div class="cartao analise" id="analise-ref" style="position:static">
+            <p class="sobretitulo">Análise da IA</p>
+            <p class="nota-ia">Escolha uma imagem para a IA identificar o estilo, as cores e o tamanho mínimo. Opcional: você pode seguir só com a descrição.</p>
+          </div>
+        </div>
+        <p class="erro" id="erro-0" role="alert"></p>
+        <div class="etapa-rodape"><a class="botao fantasma" id="voltar-perfil">Voltar</a><button type="button" class="botao primario" data-avancar>Continuar</button></div>
+      </section>
+
+      <!-- II. Corpo -->
+      <section class="etapa" data-etapa="1" hidden>
+        <div class="etapa-titulo"><span class="romano">II.</span><h2>Onde e de que tamanho</h2></div>
+        <p class="etapa-texto">Toque no local do corpo. O tamanho é aproximado: o tatuador ajusta com você.</p>
+        <div class="corpo">
+          <div class="cartao silhueta">
+            <div class="lado-corpo" role="group" aria-label="Vista">
+              <button type="button" class="chip" data-vista="frente" aria-pressed="true">Frente</button>
+              <button type="button" class="chip" data-vista="costas" aria-pressed="false">Costas</button>
+            </div>
+            <div id="silhueta"></div>
+          </div>
+          <div style="display:grid;gap:22px;align-content:start">
+            <div>
+              <p class="sobretitulo">Local escolhido</p>
+              <p class="local-escolhido" id="local-escolhido">Nenhum ainda</p>
+            </div>
+            <label class="campo" id="campo-tamanho">Tamanho aproximado: <span class="mono" id="tamanho-valor">10 cm</span>
+              <input type="range" id="tamanho" min="3" max="40" value="10">
+              <small id="tamanho-dica"></small>
+            </label>
+            <div class="campo" id="campo-cor">Vai ter cor?
+              <div class="opcoes-sim-nao" role="group" aria-label="Cor">
+                <button type="button" class="chip" data-colorida="false" aria-pressed="true">Preto e cinza</button>
+                <button type="button" class="chip" data-colorida="true" aria-pressed="false">Colorida</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="erro" id="erro-1" role="alert"></p>
+        <div class="etapa-rodape"><button type="button" class="botao fantasma" data-voltar>Voltar</button><button type="button" class="botao primario" data-avancar>Continuar</button></div>
+      </section>
+
+      <!-- III. Prévia -->
+      <section class="etapa" data-etapa="2" hidden>
+        <div class="etapa-titulo"><span class="romano">III.</span><h2>Veja como fica em você</h2></div>
+        <p class="etapa-texto">Opcional. Tire ou escolha uma foto do local, depois arraste e ajuste o desenho.</p>
+        <div class="aviso-privado"><span aria-hidden="true">🔒</span><span>A foto do seu corpo <b>não é enviada</b> para ninguém: a prévia acontece só neste aparelho.</span></div>
+        <div class="palco" id="palco">
+          <img class="corpo-foto" id="foto-corpo" alt="" hidden>
+          <img class="desenho" id="desenho" alt="Desenho da tatuagem (arraste para posicionar)" hidden>
+          <div class="palco-vazio" id="palco-vazio">
+            <div style="display:grid;gap:12px;justify-items:center">
+              <p>Escolha uma foto do local onde vai a tatuagem.</p>
+              <label class="botao contorno" for="arquivo-corpo">Escolher foto</label>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="arquivo-corpo" accept="image/*" hidden>
+        <div class="controles">
+          <label class="campo">Tamanho<input type="range" id="p-tamanho" min="5" max="90" value="30"></label>
+          <label class="campo">Rotação<input type="range" id="p-rotacao" min="-180" max="180" value="0"></label>
+          <label class="campo">Intensidade<input type="range" id="p-opacidade" min="20" max="100" value="88"></label>
+        </div>
+        <div class="etapa-rodape"><button type="button" class="botao fantasma" data-voltar>Voltar</button><button type="button" class="botao primario" data-avancar id="avancar-previa">Pular</button></div>
+      </section>
+
+      <!-- IV. Dados -->
+      <section class="etapa" data-etapa="3" hidden>
+        <div class="etapa-titulo"><span class="romano">IV.</span><h2>Seus dados</h2></div>
+        <p class="etapa-texto">Só o tatuador vê. Ele usa o contato para combinar os detalhes.</p>
+        <div class="duas-colunas">
+          <label class="campo">Seu nome<input name="nome_cliente" id="nome" autocomplete="name" required minlength="2" maxlength="80"></label>
+          <label class="campo">WhatsApp ou Instagram<input name="contato" id="contato" autocomplete="tel" required minlength="5" maxlength="80" placeholder="(21) 99999-9999 ou @seuperfil"></label>
+        </div>
+        <div class="campo">É sua primeira tatuagem?
+          <div class="opcoes-sim-nao" role="group" aria-label="Primeira tatuagem">
+            <button type="button" class="chip" data-primeira="true" aria-pressed="false">Sim, a primeira</button>
+            <button type="button" class="chip" data-primeira="false" aria-pressed="true">Já tenho outras</button>
+          </div>
+        </div>
+        <label class="campo">Observações <small>alergias, horários que prefere, se é cobertura de outra tattoo…</small><textarea name="observacoes" id="observacoes" maxlength="400"></textarea></label>
+        <label style="display:flex;gap:10px;align-items:start;font-size:0.95rem"><input type="checkbox" id="aceite" required> <span>Li e aceito os <a href="/termos.html" target="_blank">termos de uso e privacidade</a>.</span></label>
+        <p class="erro" id="erro-3" role="alert"></p>
+        <div class="etapa-rodape"><button type="button" class="botao fantasma" data-voltar>Voltar</button><button type="submit" class="botao primario" id="enviar">Enviar pedido</button></div>
+      </section>
+    </form>
+
+    <section class="etapa" id="sucesso" hidden>
+      <div class="etapa-titulo"><span class="romano">✓</span><h2>Pedido enviado!</h2></div>
+      <p class="etapa-texto" id="sucesso-texto"></p>
+      <div><p class="sobretitulo">Seu código</p><p class="codigo-grande" id="codigo"></p></div>
+      <p>Guarde esse código. É com ele que você vê a resposta e aceita a proposta.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="botao primario" id="link-acompanhar">Acompanhar pedido</a>
+        <button class="botao contorno" id="copiar">Copiar código</button>
+        <a class="botao fantasma" href="/">Voltar ao início</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

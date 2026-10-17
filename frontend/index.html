@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tatuo · ache o traço, ache quem tatua</title>
+  <meta name="description" content="Mande uma referência e a IA do Tatuo acha tatuadores com o traço parecido, perto de você.">
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="/css/tatuo.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
+  <script type="module" src="/js/inicio.js"></script>
+</head>
+<body>
+  <main id="conteudo">
+    <section class="contido heroi">
+      <div>
+        <p class="sobretitulo">Tatuadores do Rio · com IA</p>
+        <h1>Ache o traço.<br><em>Ache quem tatua.</em></h1>
+        <p class="heroi-texto">Mande a referência da tatuagem que você quer. A IA entende o estilo e mostra quem tem o traço mais parecido, perto de você.</p>
+
+        <form class="soltar" id="soltar">
+          <label class="soltar-linha" for="arquivo-ref" style="cursor:pointer">
+            <span class="soltar-icone" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></span>
+            <span><b>Solte a imagem de referência aqui</b><small>ou clique para escolher · JPG, PNG ou WebP · fica só no seu aparelho</small></span>
+          </label>
+          <input type="file" id="arquivo-ref" accept="image/jpeg,image/png,image/webp" hidden>
+          <div class="soltar-previa" id="soltar-previa" hidden>
+            <img id="soltar-img" alt="Sua referência">
+            <span><b id="soltar-nome"></b><button type="button" class="botao fantasma pequeno" id="trocar-ref">Trocar</button></span>
+          </div>
+          <span class="ou">ou descreva</span>
+          <div class="soltar-busca">
+            <input id="descricao" placeholder="Ex.: sapo com asas, old school" aria-label="Descreva a tatuagem" maxlength="120">
+            <button class="botao primario" type="submit" id="botao-achar">Achar meu tatuador</button>
+          </div>
+        </form>
+      </div>
+      <div class="folha" id="folha" aria-hidden="true"></div>
+    </section>
+
+    <section class="secao" id="resultado" hidden>
+      <div class="contido">
+        <div class="secao-topo">
+          <div>
+            <p class="sobretitulo">O que a IA viu</p>
+            <h2>Quem tem esse traço</h2>
+          </div>
+          <button class="botao fantasma" id="limpar-busca">Nova busca</button>
+        </div>
+        <div class="resultado">
+          <aside class="cartao analise" id="analise"></aside>
+          <div id="parecidos" class="grade-tatuadores"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao" id="catalogo">
+      <div class="contido">
+        <div class="secao-topo">
+          <div>
+            <p class="sobretitulo">Catálogo</p>
+            <h2>Tatuadores</h2>
+            <p>Filtre por estilo, preço e distância. Cada um tem portfólio, flashes e jeito próprio de trabalhar.</p>
+          </div>
+        </div>
+        <div class="filtros">
+          <div class="filtros-linha" id="filtro-estilos" role="group" aria-label="Estilo"></div>
+          <div class="filtros-linha">
+            <input class="entrada-busca" id="busca" type="search" placeholder="Nome, estúdio ou bairro" aria-label="Buscar tatuador">
+            <select id="preco" aria-label="Preço">
+              <option value="">Qualquer preço</option>
+              <option value="250">Até R$ 250</option>
+              <option value="300">Até R$ 300</option>
+              <option value="400">Até R$ 400</option>
+            </select>
+            <button class="chip" id="perto" aria-pressed="false">📍 Perto de mim</button>
+          </div>
+        </div>
+        <div class="catalogo">
+          <div id="lista-tatuadores" class="grade-tatuadores"></div>
+          <div class="mapa" id="mapa" role="region" aria-label="Mapa dos estúdios"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao" id="flashes">
+      <div class="contido">
+        <div class="secao-topo">
+          <div>
+            <p class="sobretitulo">Prontos para tatuar</p>
+            <h2>Flashes à venda</h2>
+            <p>Desenhos prontos, com preço fechado. Escolheu, reservou: o tatuador confirma o horário.</p>
+          </div>
+        </div>
+        <div id="lista-flashes" class="grade-flashes"></div>
+      </div>
+    </section>
+
+    <section class="secao">
+      <div class="contido">
+        <div class="secao-topo"><div><p class="sobretitulo">Como funciona</p><h2>Da ideia à agulha</h2></div></div>
+        <ol class="passos">
+          <li><span class="romano">I.</span><b>Mande a referência</b><p>Uma foto, um print ou só uma descrição. A IA identifica o estilo, se é colorida e o tamanho mínimo.</p></li>
+          <li><span class="romano">II.</span><b>Escolha quem tatua</b><p>Veja quem tem o traço parecido, o preço, a distância e o portfólio.</p></li>
+          <li><span class="romano">III.</span><b>Monte o pedido</b><p>Marque o local no corpo, o tamanho e teste a tattoo numa foto sua. A foto não sai do seu celular.</p></li>
+          <li><span class="romano">IV.</span><b>Receba a proposta</b><p>O tatuador responde com valor e datas. Você acompanha pelo código e aceita quando quiser.</p></li>
+        </ol>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

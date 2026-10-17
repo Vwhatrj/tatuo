@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meu pedido · Tatuo</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/tatuo.css">
+  <script type="module" src="/js/acompanhar.js"></script>
+</head>
+<body>
+  <main id="conteudo" class="contido" style="max-width:760px;padding:40px 0 64px;display:grid;grid-template-columns:minmax(0,1fr);gap:28px">
+    <div>
+      <p class="sobretitulo">Acompanhar</p>
+      <h1 style="font-size:clamp(2.2rem,1.4rem + 3vw,3.4rem)">Meu pedido</h1>
+    </div>
+    <form id="form-codigo" class="soltar-busca" style="max-width:520px">
+      <input id="codigo" class="mono" placeholder="Código, ex.: K7Q2-X9MP" aria-label="Código do pedido" maxlength="9" autocomplete="off" style="text-transform:uppercase;letter-spacing:.1em">
+      <button class="botao tinta" type="submit">Ver pedido</button>
+    </form>
+    <div id="meus"></div>
+    <div id="pedido"></div>
+  </main>
+</body>
+</html>

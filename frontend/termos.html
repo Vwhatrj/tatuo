@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Termos e privacidade · Tatuo</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/tatuo.css">
+  <script type="module">import { montarTopo } from "/js/comum.js"; montarTopo();</script>
+  <style>
+    .termos { max-width: 720px; padding: 40px 0 64px; display: grid; gap: 22px; }
+    .termos h2 { font-size: 1.5rem; margin-top: 12px; }
+    .termos p, .termos li { color: var(--tinta-2); }
+    .termos ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+  </style>
+</head>
+<body>
+  <main id="conteudo" class="contido termos">
+    <div>
+      <p class="sobretitulo">Versão de protótipo · outubro de 2026</p>
+      <h1 style="font-size:clamp(2.2rem,1.4rem + 3vw,3.4rem)">Termos e privacidade</h1>
+    </div>
+    <p>O Tatuo é um <b>protótipo</b> de portfólio. Os tatuadores do catálogo são fictícios. Explicamos aqui, em linguagem simples, o que acontece com os seus dados.</p>
+
+    <h2>O que fica só no seu aparelho</h2>
+    <ul>
+      <li><b>A foto do seu corpo</b>, usada na prévia, nunca é enviada. Ela é aberta direto no navegador e some quando você fecha a página.</li>
+      <li><b>A análise da IA</b> roda no seu navegador. A imagem de referência não vai para nenhum serviço de inteligência artificial.</li>
+      <li>Sua localização, se você usar "Perto de mim", fica guardada só neste navegador por até 1 hora. Ela é usada para calcular a distância até os estúdios.</li>
+    </ul>
+
+    <h2>O que é enviado ao tatuador</h2>
+    <ul>
+      <li>A imagem de referência (se você mandar uma) e a descrição da ideia.</li>
+      <li>O local do corpo, o tamanho, se é colorida, se é a primeira tatuagem e as observações.</li>
+      <li>O estilo identificado pela IA, como sugestão.</li>
+      <li>Seu nome e o contato (WhatsApp ou Instagram) que você informar.</li>
+    </ul>
+    <p>Esses dados servem apenas para o tatuador avaliar e responder seu pedido. Não vendemos nem repassamos dados a terceiros.</p>
+
+    <h2>Seus direitos (LGPD)</h2>
+    <p>Você pode pedir para ver, corrigir ou apagar os dados de um pedido a qualquer momento, informando o código do pedido. Pedidos cancelados ou encerrados podem ser apagados a pedido.</p>
+
+    <h2>A IA dá sugestões, não garantias</h2>
+    <p>O estilo e o tamanho mínimo indicados pela IA são estimativas. Quem decide o desenho, o tamanho e o valor é sempre o tatuador, junto com você.</p>
+
+    <p><a class="botao contorno" href="javascript:history.back()">Voltar</a></p>
+  </main>
+</body>
+</html>
