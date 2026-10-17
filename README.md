@@ -8,6 +8,8 @@ O Tatuo junta **"eu tatuo"** com **tatu**, o bicho: o mascote é um tatuzinho, c
 
 ![Tela inicial do Tatuo](docs/inicio.jpg)
 
+**Comercial (1min12, sem som):** [“A primeira tatuagem da Bia”](docs/video/tatuo-comercial-a-primeira-tatuagem-da-bia.mp4) mostra uma situação real, o problema, e o app resolvendo de verdade. A narração para voz de IA está em [`docs/video/narracao-voz-ia.txt`](docs/video/narracao-voz-ia.txt).
+
 > Protótipo de portfólio. Os 6 tatuadores, estúdios e artes são fictícios. As artes foram geradas por código em [`scripts/gerar_obras.py`](scripts/gerar_obras.py). Os pagamentos usam um **provedor simulado**: nenhum dinheiro de verdade é movimentado.
 
 ## Novidades da v2.0: Fase 2, pagamento com custódia
