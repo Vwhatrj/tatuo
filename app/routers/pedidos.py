@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from app.db import get_db
 from app.imagens import salvar_imagem
+from app.pagamentos import fluxo
 
 router = APIRouter(prefix="/api/pedidos", tags=["Pedidos (cliente)"])
 
@@ -47,8 +48,25 @@ class PedidoPublico(BaseModel):
     resposta_valor: int | None
     resposta_datas: str | None
     resposta_msg: str | None
+    pagamento_quando: str | None
+    pagamento_tipo: str | None
+    sinal_pct: int | None
+    confirmado_cliente_em: str | None
+    confirmado_tatuador_em: str | None
+    pagamento: "ResumoPagamento | None" = None
     criado_em: str
     respondido_em: str | None
+
+
+class ResumoPagamento(BaseModel):
+    status: str
+    metodo: str
+    tipo: str
+    valor_centavos: int
+    pago_em: str | None
+
+
+PedidoPublico.model_rebuild()
 
 
 def novo_codigo(db) -> str:
@@ -72,7 +90,10 @@ def buscar(db, codigo: str) -> dict:
     ).fetchone()
     if not linha:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Pedido não encontrado. Confira o código.")
-    return dict(linha)
+    pedido = dict(linha)
+    pag = fluxo.ultimo_pagamento(db, pedido["id"])
+    pedido["pagamento"] = dict(pag) if pag else None
+    return pedido
 
 
 @router.post("", response_model=PedidoPublico, status_code=status.HTTP_201_CREATED, summary="Envia um pedido")
@@ -153,11 +174,28 @@ def aceitar(codigo: str, db=Depends(get_db)):
 
 @router.post("/{codigo}/cancelar", response_model=PedidoPublico, summary="Cliente desiste do pedido")
 def cancelar(codigo: str, db=Depends(get_db)):
+    """Antes de combinar, só encerra. Depois de combinado e pago: sinal fica com o tatuador,
+    pagamento total volta para o cliente (ver app/pagamentos/fluxo.py)."""
     pedido = buscar(db, codigo)
-    if pedido["status"] not in ("novo", "respondido"):
+    if pedido["status"] not in ("novo", "respondido", "aceito"):
         raise HTTPException(status.HTTP_409_CONFLICT, "Este pedido já foi encerrado.")
+    if pedido["status"] == "aceito":
+        fluxo.desistencia(db, pedido, "cliente")
     db.execute("UPDATE pedido SET status = 'cancelado' WHERE id = ?", (pedido["id"],))
     liberar_flash(db, pedido)
+    db.commit()
+    return buscar(db, codigo)
+
+
+@router.post("/{codigo}/confirmar-sessao", response_model=PedidoPublico, summary="Cliente confirma que a sessão aconteceu")
+def confirmar_sessao(codigo: str, db=Depends(get_db)):
+    """Quando cliente e tatuador confirmam, o pedido vira "realizado" e o dinheiro retido é liberado."""
+    pedido = buscar(db, codigo)
+    motivo = fluxo.pode_confirmar(db, pedido)
+    if motivo:
+        raise HTTPException(status.HTTP_409_CONFLICT, motivo)
+    db.execute(f"UPDATE pedido SET confirmado_cliente_em = {fluxo.AGORA} WHERE id = ?", (pedido["id"],))
+    fluxo.finalizar_se_os_dois_confirmaram(db, pedido["id"])
     db.commit()
     return buscar(db, codigo)
 

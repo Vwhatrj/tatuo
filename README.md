@@ -4,11 +4,23 @@
 
 O Tatuo junta **"eu tatuo"** com **tatu**, o bicho: o mascote é um tatuzinho, cuja carapaça lembra traço de tatuagem.
 
-É um app que liga quem quer fazer uma tatuagem a quem tatua. O cliente manda uma referência, a **IA identifica o estilo e mostra os tatuadores com o traço mais parecido**, perto dele. Depois ele monta o pedido completo (local do corpo, tamanho e uma prévia numa foto do próprio braço) e o tatuador responde com valor e datas num painel próprio.
+É um app que liga quem quer fazer uma tatuagem a quem tatua. O cliente manda uma referência, a **IA identifica o estilo e mostra os tatuadores com o traço mais parecido**, perto dele. Depois ele monta o pedido completo (local do corpo, tamanho e uma prévia numa foto do próprio braço), o tatuador responde com valor, datas e condições de pagamento, e o **sinal é pago pelo app, com o dinheiro guardado até a sessão acontecer**.
 
 ![Tela inicial do Tatuo](docs/inicio.jpg)
 
-> Protótipo de portfólio. Os 6 tatuadores, estúdios e artes são fictícios. As artes foram geradas por código em [`scripts/gerar_obras.py`](scripts/gerar_obras.py).
+> Protótipo de portfólio. Os 6 tatuadores, estúdios e artes são fictícios. As artes foram geradas por código em [`scripts/gerar_obras.py`](scripts/gerar_obras.py). Os pagamentos usam um **provedor simulado**: nenhum dinheiro de verdade é movimentado.
+
+## Novidades da v2.0: Fase 2, pagamento com custódia
+
+| | v1.0 (Fase 1) | v2.0 (Fase 2) |
+|---|---|---|
+| Proposta do tatuador | valor, datas e mensagem | **+ como receber:** sinal (%) ou total pelo app, ou direto no estúdio |
+| Pagamento | combinado por fora | **PIX** (copia-e-cola no padrão do Banco Central, com QR Code) ou **cartão** |
+| Segurança para os dois | nenhuma | dinheiro **retido no Tatuo** e liberado só depois que **os dois confirmam** a sessão |
+| Desistências | — | tatuador cancela: cliente recebe tudo · cliente desiste: o sinal fica com o tatuador |
+| Painel do tatuador | pedidos e flashes | **+ sessões realizadas e aba Financeiro** (a receber, recebido, taxas) |
+| Receita do Tatuo | nenhuma | **taxa sobre cada pagamento pelo app** (8% no teste, configurável) |
+| Testes automáticos | 26 | **45** |
 
 ## O problema
 
@@ -22,18 +34,32 @@ Hoje o orçamento de tatuagem acontece por DM no Instagram: o cliente manda uma 
 - **Catálogo:** filtros por estilo, preço e "perto de mim", com mapa dos estúdios.
 - **Flashes à venda:** desenhos prontos com preço fechado. Peças únicas saem do catálogo assim que alguém reserva.
 - **Pedido em 4 etapas:** referência, local do corpo numa silhueta (frente e costas), **prévia numa foto do corpo** (arrastar, girar, redimensionar) e dados de contato.
-- **Acompanhar pelo código:** sem criar conta. Vê a proposta, aceita ou desiste.
+- **Acompanhar pelo código:** sem criar conta. Vê a proposta, aceita, paga o sinal e confirma quando a tatuagem for feita.
 
 **Para o tatuador**
 - Painel com os pedidos que chegaram: referência, local, tamanho, estilo detectado e contato (link direto pro WhatsApp ou Instagram).
-- Mandar proposta (valor, datas e mensagem), recusar com explicação ou arquivar.
+- Mandar proposta (valor, datas, mensagem e **como quer receber**), recusar com explicação ou arquivar. O formulário já mostra quanto ele recebe, descontada a taxa.
+- Confirmar a sessão feita, cancelar com aviso ao cliente e acompanhar o dinheiro na aba **Financeiro**.
 - Publicar flashes e esconder ou mostrar cada um no catálogo.
 
-| Análise da IA | Prévia na pele | Proposta para o cliente | Painel do tatuador |
-|---|---|---|---|
-| ![Análise da IA](docs/analise-ia.jpg) | ![Prévia](docs/previa.jpg) | ![Acompanhar](docs/acompanhar.jpg) | ![Painel](docs/painel.jpg) |
+![Resultado da IA: estilo da referência e tatuadores com traço parecido](docs/resultado-ia.jpg)
 
-![Catálogo com mapa](docs/catalogo.jpg)
+| Local no corpo | Prévia na pele | PIX com custódia | Proposta com sinal |
+|---|---|---|---|
+| ![Silhueta](docs/silhueta.jpg) | ![Prévia](docs/previa.jpg) | ![PIX](docs/pix.jpg) | ![Proposta](docs/painel-proposta.jpg) |
+
+![Financeiro do tatuador](docs/financeiro.jpg)
+
+## Como o dinheiro anda (Fase 2)
+
+1. O tatuador manda a proposta dizendo **como quer receber**: um sinal (ex.: 30%) ou o valor total pelo app, ou tudo no estúdio.
+2. O cliente aceita e paga **por PIX ou cartão**. O valor fica **retido no Tatuo**, e não com o tatuador.
+3. Depois da sessão, **cliente e tatuador confirmam** que a tatuagem foi feita.
+4. Com as duas confirmações, o valor é **liberado ao tatuador**, já sem a taxa do Tatuo.
+
+Se der errado antes: quando **o tatuador cancela**, o cliente recebe tudo de volta. Quando **o cliente desiste**, o sinal fica com o tatuador (é para isso que ele existe, e o cliente vê essa regra antes de pagar); um pagamento total é devolvido. As regras ficam todas em [`app/pagamentos/fluxo.py`](app/pagamentos/fluxo.py).
+
+**Provedor de pagamento.** O app só conhece uma interface: criar a cobrança, repassar e reembolsar ([`app/pagamentos/provedor.py`](app/pagamentos/provedor.py)). Hoje roda o **provedor simulado**: o PIX copia-e-cola segue o formato oficial do Banco Central (com CRC16, conferido contra o exemplo do manual do BCB nos testes) e o cartão abre um **checkout de teste que não pede dado de cartão nenhum**. Para ir para produção, escreve-se um adaptador para o Mercado Pago ou outro provedor (com CNPJ e conta de recebedor) e troca-se `PROVEDOR_PAGAMENTO` no `.env`, sem mexer no resto do app.
 
 ## A IA: grátis, no navegador e sem enviar a imagem
 
@@ -64,7 +90,8 @@ O CLIP transforma imagens e textos em vetores de 512 números, e coisas parecida
 - **Front-end:** HTML, CSS e JavaScript puro (módulos ES), sem build, servido pela própria API
 - **IA:** Transformers.js com CLIP (`Xenova/clip-vit-base-patch32`) no navegador
 - **Mapa:** Leaflet e OpenStreetMap (grátis)
-- **Testes:** 26 testes de API com pytest, no GitHub Actions
+- **Pagamentos:** custódia com PIX (BR Code + QR Code com a biblioteca `qrcode`) e cartão, atrás de uma interface de provedor
+- **Testes:** 45 testes com pytest (API, regras de dinheiro e PIX), no GitHub Actions
 - **Deploy:** Dockerfile com banco e uploads num volume
 
 Detalhes de implementação:
@@ -72,6 +99,8 @@ Detalhes de implementação:
 - **Distância:** a fórmula de haversine calcula a distância em km, e a lista sai ordenada do mais perto ao mais longe ([`app/geo.py`](app/geo.py)).
 - **Duas pessoas reservando o mesmo flash ao mesmo tempo:** `UPDATE flash SET disponivel = 0 WHERE id = ? AND disponivel = 1` é atômico. Só um dos pedidos muda a linha; o outro recebe 409.
 - **Código do pedido sem confusão:** 8 caracteres de um alfabeto sem O/0 e I/1/L (31⁸ ≈ 850 bilhões de combinações), gerados com `secrets`.
+- **Dinheiro em centavos:** valores, sinal e taxa são inteiros em centavos, sem erro de arredondamento de `float`.
+- **Uma cobrança viva por pedido:** um índice único parcial (`WHERE status IN ('pendente', 'retido')`) impede duas cobranças abertas ao mesmo tempo, mesmo com dois cliques simultâneos.
 - **Cache que não engana:** o servidor manda `Cache-Control: no-cache` nos arquivos do site. O navegador pode guardar, mas confere a versão (ETag) antes de usar, então ninguém fica com versão velha depois de uma atualização.
 
 ## Como rodar
@@ -119,14 +148,20 @@ pytest -v
 | POST | `/api/pedidos` | aberto | Envia um pedido (multipart, com a imagem) |
 | GET | `/api/pedidos/{codigo}` | quem tem o código | Acompanha o pedido |
 | POST | `/api/pedidos/{codigo}/aceitar` · `/cancelar` | quem tem o código | Aceita a proposta ou desiste |
+| POST, GET | `/api/pedidos/{codigo}/pagamento` | quem tem o código | Gera a cobrança (PIX ou cartão) e acompanha |
+| POST | `/api/pedidos/{codigo}/confirmar-sessao` | quem tem o código | Cliente confirma que a tatuagem foi feita |
 | POST | `/api/auth/token` | aberto | Login do tatuador |
-| GET | `/api/painel/pedidos?situacao=` | tatuador | Pedidos recebidos |
-| POST | `/api/painel/pedidos/{id}/responder` · `/recusar` · `/arquivar` | tatuador | Proposta, recusa ou arquivo |
+| GET | `/api/painel/pedidos?situacao=` | tatuador | Pedidos (abertos, combinados, realizados, encerrados) |
+| POST | `/api/painel/pedidos/{id}/responder` · `/recusar` · `/arquivar` | tatuador | Proposta (com condições de pagamento), recusa ou arquivo |
+| POST | `/api/painel/pedidos/{id}/confirmar-sessao` · `/cancelar` | tatuador | Confirma a sessão ou cancela com reembolso |
+| GET | `/api/painel/financeiro` | tatuador | A receber, recebido, taxas e movimentos |
 | GET, POST, PATCH | `/api/painel/flashes` | tatuador | Publicar e esconder flashes |
+| GET, POST | `/api/simulador/pagamentos/{ref}` · `/aprovar` | só no modo simulado | Faz o papel do aviso (webhook) do provedor |
 
 ## Próximas fases
 
-- **Pagamento pelo app:** sinal ou valor total, com antes, depois ou presencial, e PIX, cartão ou dinheiro. O dinheiro é liberado depois que os dois confirmam. No protótipo, com o modo de teste do Mercado Pago.
+- **Fase 2 concluída (v2.0):** pagamento com sinal ou total, PIX ou cartão, custódia e liberação após a confirmação dos dois.
+- **Provedor real:** adaptador para o Mercado Pago (modo de teste) com webhook, quando houver credenciais de desenvolvedor.
 - **Destaque pago** para o tatuador aparecer primeiro no catálogo.
 - **Avaliações com foto cicatrizada,** 30 dias depois da sessão.
 - **Cuidados pós-tatuagem:** lembretes nos dias 1, 3 e 7 e aviso de retoque.

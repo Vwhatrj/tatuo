@@ -41,6 +41,15 @@ export async function api(caminho, { metodo = "GET", corpo, formulario, token } 
 // ---------- formatação ----------
 
 export const reais = (v) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+export const centavos = (c) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/** Texto das condições de pagamento de uma proposta (pedido com pagamento_quando/tipo/sinal_pct). */
+export function condicoes(p) {
+  if (p.pagamento_quando !== "app") return "Pagamento direto no estúdio, no dia da sessão.";
+  if (p.pagamento_tipo === "total") return `Pagamento total pelo app (${reais(p.resposta_valor)}) para garantir o horário.`;
+  const sinal = Math.round(p.resposta_valor * p.sinal_pct) / 100;
+  return `Sinal de ${p.sinal_pct}% pelo app (${centavos(Math.round(sinal * 100))}) para garantir o horário. O resto, no estúdio.`;
+}
 export const km = (d) => (d < 1 ? `${Math.round(d * 1000)} m` : `${d.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} km`);
 export const iniciais = (nome) => nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
 export const TRACO = { fino: "Traço fino", medio: "Traço médio", grosso: "Traço grosso" };

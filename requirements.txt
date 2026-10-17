@@ -2,6 +2,7 @@ fastapi==0.143.2
 uvicorn[standard]==0.54.0
 python-dotenv==1.2.4
 python-multipart==0.0.32
+qrcode==8.2
 
 # login do tatuador (JWT + hash de senha Argon2)
 PyJWT==2.15.1

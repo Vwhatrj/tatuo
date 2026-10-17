@@ -212,7 +212,7 @@ input[type="checkbox"] { accent-color: var(--vermelho); width: 18px; height: 18p
 .tatuador-capa { position: relative; aspect-ratio: 4 / 3; background: #f4ede0; overflow: hidden; }
 .tatuador-capa img { width: 100%; height: 100%; object-fit: cover; }
 .tatuador-capa .selo { position: absolute; left: 10px; top: 10px; }
-.tatuador-capa .afinidade { position: absolute; right: 10px; top: 10px; background: var(--tinta); color: var(--papel); }
+.tatuador-capa .afinidade { position: absolute; left: 10px; bottom: 10px; background: var(--tinta); color: var(--papel); }
 .tatuador-corpo { display: grid; gap: 8px; padding: 14px 16px 16px; align-content: start; }
 .tatuador-nome { display: flex; align-items: center; gap: 10px; }
 .avatar { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; color: #fff; font: 700 0.95rem/1 var(--fonte-titulo); }
@@ -398,3 +398,24 @@ input[type="checkbox"] { accent-color: var(--vermelho); width: 18px; height: 18p
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- Fase 2: pagamento ---------- */
+.caixa-pagamento { padding: 22px; display: grid; gap: 14px; border-left: 4px solid var(--ok); }
+.regras { margin: 0; padding-left: 20px; display: grid; gap: 4px; color: var(--tinta-2); font-size: 0.95rem; }
+.pix { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; padding-top: 6px; }
+.pix-qr { background: #fff; border-radius: 12px; padding: 10px; border: 1px solid var(--linha); }
+.pix-qr svg { width: 100%; height: auto; display: block; }
+.pix-codigo { display: block; font: 400 0.78rem/1.4 var(--fonte-mono); background: var(--papel-2); border-radius: 8px; padding: 10px; overflow-wrap: anywhere; max-height: 92px; overflow: auto; }
+.aviso-teste { display: grid; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--aviso-suave); color: var(--aviso); font-size: 0.9rem; }
+.aviso-teste p { margin: 0; }
+.condicoes-pagamento { display: grid; gap: 10px; padding: 12px; border-radius: 10px; border: 1px dashed var(--linha-forte); }
+.resumo-valores { font-size: 0.9rem; color: var(--tinta-2); }
+.numeros-financeiro { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.numeros-financeiro div { padding: 18px; border-radius: var(--raio); background: var(--cartao); border: 1px solid var(--linha); }
+.numeros-financeiro dt { font-size: 0.82rem; color: var(--tinta-3); }
+.numeros-financeiro dd { margin: 4px 0 0; font: 700 1.7rem/1.1 var(--fonte-titulo); }
+.tabela { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.tabela th, .tabela td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--linha); }
+.tabela th { font: 500 0.76rem var(--fonte-mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--tinta-3); }
+.tabela-moldura { overflow-x: auto; }
+@media (max-width: 560px) { .pix { grid-template-columns: minmax(0, 1fr); } .pix-qr { max-width: 220px; } }

@@ -1,15 +1,17 @@
-"""Painel do tatuador: pedidos recebidos, respostas e flashes."""
+"""Painel do tatuador: pedidos recebidos, respostas, sessões, dinheiro e flashes."""
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.auth import TatuadorLogado, tatuador_atual
 from app.db import get_db
 from app.imagens import salvar_imagem
+from app import config
+from app.pagamentos import fluxo
 from app.routers.catalogo import Flash
-from app.routers.pedidos import liberar_flash
+from app.routers.pedidos import ResumoPagamento, liberar_flash
 
 router = APIRouter(prefix="/api/painel", tags=["Painel do tatuador"])
 
@@ -37,6 +39,12 @@ class PedidoPainel(BaseModel):
     resposta_valor: int | None
     resposta_datas: str | None
     resposta_msg: str | None
+    pagamento_quando: str | None
+    pagamento_tipo: str | None
+    sinal_pct: int | None
+    confirmado_cliente_em: str | None
+    confirmado_tatuador_em: str | None
+    pagamento: ResumoPagamento | None = None
     criado_em: str
     respondido_em: str | None
 
@@ -45,6 +53,21 @@ class Resposta(BaseModel):
     valor: int = Field(gt=0, le=100000, description="Valor em reais")
     datas: str = Field(min_length=3, max_length=200, examples=["sáb 25/10 às 14h ou ter 28/10 às 10h"])
     mensagem: str = Field(default="", max_length=500)
+    pagamento_quando: Literal["app", "estudio"] = Field("estudio", description="app = pelo Tatuo antes da sessão")
+    pagamento_tipo: Literal["sinal", "total"] = "sinal"
+    sinal_pct: int = Field(30, ge=10, le=100, description="Porcentagem do sinal, se tipo = sinal")
+
+    @model_validator(mode="after")
+    def coerente(self):
+        if self.pagamento_quando == "estudio":
+            self.pagamento_tipo, self.sinal_pct = None, None
+        elif self.pagamento_tipo == "total":
+            self.sinal_pct = None
+        return self
+
+
+class Cancelamento(BaseModel):
+    mensagem: str = Field(min_length=3, max_length=500)
 
 
 class Recusa(BaseModel):
@@ -61,11 +84,18 @@ SELECT_PEDIDO = """
 """
 
 
+def com_pagamento(db, linha) -> dict:
+    pedido = dict(linha)
+    pag = fluxo.ultimo_pagamento(db, pedido["id"])
+    pedido["pagamento"] = dict(pag) if pag else None
+    return pedido
+
+
 def pedido_do_tatuador(db, pedido_id: int, tatuador_id: int) -> dict:
     linha = db.execute(SELECT_PEDIDO + " WHERE p.id = ? AND p.tatuador_id = ?", (pedido_id, tatuador_id)).fetchone()
     if not linha:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Pedido não encontrado.")
-    return dict(linha)
+    return com_pagamento(db, linha)
 
 
 @router.get("/resumo", summary="Quantos pedidos em cada situação")
@@ -78,18 +108,20 @@ def resumo(tatuador: Logado, db=Depends(get_db)):
 @router.get("/pedidos", response_model=list[PedidoPainel], summary="Pedidos recebidos")
 def listar_pedidos(
     tatuador: Logado,
-    situacao: str = Query("abertos", pattern="^(abertos|aceito|encerrados|todos)$"),
+    situacao: str = Query("abertos", pattern="^(abertos|aceito|realizado|encerrados|todos)$"),
     db=Depends(get_db),
 ):
-    """`abertos` = novos e respondidos; `encerrados` = recusados, cancelados e arquivados."""
+    """`abertos` = novos e respondidos; `aceito` = combinados; `realizado` = sessões feitas;
+    `encerrados` = recusados, cancelados e arquivados."""
     filtros = {
         "abertos": "AND p.status IN ('novo', 'respondido')",
         "aceito": "AND p.status = 'aceito'",
+        "realizado": "AND p.status = 'realizado'",
         "encerrados": "AND p.status IN ('recusado', 'cancelado', 'arquivado')",
         "todos": "",
     }
     sql = SELECT_PEDIDO + f" WHERE p.tatuador_id = ? {filtros[situacao]} ORDER BY p.status = 'novo' DESC, p.criado_em DESC"
-    return [dict(linha) for linha in db.execute(sql, (tatuador.id,))]
+    return [com_pagamento(db, linha) for linha in db.execute(sql, (tatuador.id,))]
 
 
 @router.post("/pedidos/{pedido_id}/responder", response_model=PedidoPainel, summary="Manda a proposta ao cliente")
@@ -100,10 +132,12 @@ def responder(pedido_id: int, dados: Resposta, tatuador: Logado, db=Depends(get_
     db.execute(
         """
         UPDATE pedido SET status = 'respondido', resposta_valor = ?, resposta_datas = ?, resposta_msg = ?,
+                          pagamento_quando = ?, pagamento_tipo = ?, sinal_pct = ?,
                           respondido_em = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
         WHERE id = ?
         """,
-        (dados.valor, dados.datas.strip(), dados.mensagem.strip(), pedido_id),
+        (dados.valor, dados.datas.strip(), dados.mensagem.strip(), dados.pagamento_quando, dados.pagamento_tipo,
+         dados.sinal_pct, pedido_id),
     )
     db.commit()
     return pedido_do_tatuador(db, pedido_id, tatuador.id)
@@ -129,11 +163,65 @@ def recusar(pedido_id: int, dados: Recusa, tatuador: Logado, db=Depends(get_db))
 @router.post("/pedidos/{pedido_id}/arquivar", response_model=PedidoPainel, summary="Tira o pedido da lista")
 def arquivar(pedido_id: int, tatuador: Logado, db=Depends(get_db)):
     pedido = pedido_do_tatuador(db, pedido_id, tatuador.id)
+    if pedido["status"] == "aceito":
+        raise HTTPException(status.HTTP_409_CONFLICT, "Pedido combinado não se arquiva: confirme a sessão ou cancele.")
     if pedido["status"] in ABERTOS:
         liberar_flash(db, pedido)
     db.execute("UPDATE pedido SET status = 'arquivado' WHERE id = ?", (pedido_id,))
     db.commit()
     return pedido_do_tatuador(db, pedido_id, tatuador.id)
+
+
+@router.post("/pedidos/{pedido_id}/confirmar-sessao", response_model=PedidoPainel,
+             summary="Confirma que a sessão aconteceu (e, se no estúdio, que recebeu)")
+def confirmar_sessao(pedido_id: int, tatuador: Logado, db=Depends(get_db)):
+    pedido = pedido_do_tatuador(db, pedido_id, tatuador.id)
+    motivo = fluxo.pode_confirmar(db, pedido)
+    if motivo:
+        raise HTTPException(status.HTTP_409_CONFLICT, motivo)
+    db.execute(f"UPDATE pedido SET confirmado_tatuador_em = {fluxo.AGORA} WHERE id = ?", (pedido_id,))
+    fluxo.finalizar_se_os_dois_confirmaram(db, pedido_id)
+    db.commit()
+    return pedido_do_tatuador(db, pedido_id, tatuador.id)
+
+
+@router.post("/pedidos/{pedido_id}/cancelar", response_model=PedidoPainel,
+             summary="Cancela uma sessão combinada (o cliente recebe tudo de volta)")
+def cancelar_sessao(pedido_id: int, dados: Cancelamento, tatuador: Logado, db=Depends(get_db)):
+    pedido = pedido_do_tatuador(db, pedido_id, tatuador.id)
+    if pedido["status"] != "aceito":
+        raise HTTPException(status.HTTP_409_CONFLICT, "Só sessões combinadas podem ser canceladas aqui.")
+    fluxo.desistencia(db, pedido, "tatuador")
+    db.execute("UPDATE pedido SET status = 'cancelado', resposta_msg = ? WHERE id = ?", (dados.mensagem.strip(), pedido_id))
+    liberar_flash(db, pedido)
+    db.commit()
+    return pedido_do_tatuador(db, pedido_id, tatuador.id)
+
+
+@router.get("/financeiro", summary="Dinheiro: a receber, recebido e taxas")
+def financeiro(tatuador: Logado, db=Depends(get_db)):
+    """Valores em centavos. `a_receber` = retido no Tatuo esperando a sessão; `recebido` = já
+    liberado, descontada a taxa; `sinais_ficados` = sinais de clientes que desistiram."""
+    linhas = db.execute(
+        """
+        SELECT g.*, p.codigo, p.nome_cliente FROM pagamento g JOIN pedido p ON p.id = g.pedido_id
+        WHERE p.tatuador_id = ? ORDER BY g.id DESC
+        """,
+        (tatuador.id,),
+    ).fetchall()
+    soma = lambda st, campo="valor_centavos": sum(l[campo] for l in linhas if l["status"] == st)  # noqa: E731
+    liberados = [l for l in linhas if l["status"] == "liberado"]
+    return {
+        "taxa_pct": config.TAXA_PLATAFORMA_PCT,
+        "a_receber": soma("retido") - soma("retido", "taxa_centavos"),
+        "recebido": sum(l["valor_centavos"] - l["taxa_centavos"] for l in liberados),
+        "taxas": sum(l["taxa_centavos"] for l in liberados),
+        "reembolsado": soma("reembolsado"),
+        "movimentos": [
+            {k: l[k] for k in ("codigo", "nome_cliente", "tipo", "metodo", "valor_centavos", "taxa_centavos", "status", "pago_em", "encerrado_em")}
+            for l in linhas if l["status"] != "cancelado"
+        ][:30],
+    }
 
 
 @router.get("/flashes", response_model=list[Flash], summary="Meus flashes (disponíveis ou não)")

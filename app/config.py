@@ -21,3 +21,14 @@ JWT_EXPIRA_MINUTOS = int(os.getenv("JWT_EXPIRA_MINUTOS", "480"))
 SENHA_DEMO = os.getenv("SENHA_DEMO", "")
 
 TAMANHO_MAX_IMAGEM = 5 * 1024 * 1024  # 5 MB
+
+# ---------- pagamentos (Fase 2) ----------
+# "simulado" funciona sem conta em lugar nenhum: gera PIX no formato do Banco Central e
+# um checkout de teste. Um provedor real (ex.: Mercado Pago) entra como outro adaptador.
+PROVEDOR_PAGAMENTO = os.getenv("PROVEDOR_PAGAMENTO", "simulado")
+# Taxa do Tatuo sobre cada pagamento que passa pelo app (em %). Valor de teste, a validar no piloto.
+TAXA_PLATAFORMA_PCT = float(os.getenv("TAXA_PLATAFORMA_PCT", "8"))
+# Recebedor do PIX: no modelo de custódia o cliente paga ao Tatuo, que repassa ao tatuador.
+PIX_CHAVE = os.getenv("PIX_CHAVE", "pagamentos@exemplo.com")
+PIX_NOME = os.getenv("PIX_NOME", "TATUO DEMO")
+PIX_CIDADE = os.getenv("PIX_CIDADE", "RIO DE JANEIRO")

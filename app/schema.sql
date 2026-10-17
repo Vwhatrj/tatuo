@@ -60,18 +60,52 @@ CREATE TABLE IF NOT EXISTS pedido (
     observacoes     TEXT    NOT NULL DEFAULT '',
     nome_cliente    TEXT    NOT NULL,
     contato         TEXT    NOT NULL,
-    -- novo → respondido (tatuador mandou proposta) → aceito (cliente topou)
-    -- recusado = o tatuador não vai fazer · cancelado = o cliente desistiu · arquivado = tirado da lista
+    -- novo → respondido (tatuador mandou proposta) → aceito (cliente topou) → realizado (os dois
+    -- confirmaram que a sessão aconteceu). recusado = o tatuador não vai fazer · cancelado = alguém
+    -- desistiu depois de combinado · arquivado = tirado da lista
     status          TEXT    NOT NULL DEFAULT 'novo'
-                    CHECK (status IN ('novo', 'respondido', 'aceito', 'recusado', 'cancelado', 'arquivado')),
+                    CHECK (status IN ('novo', 'respondido', 'aceito', 'realizado', 'recusado', 'cancelado', 'arquivado')),
     resposta_valor  INTEGER,
     resposta_datas  TEXT,
     resposta_msg    TEXT,
+    -- Condições de pagamento definidas pelo tatuador na proposta (Fase 2).
+    -- quando: 'app' = pelo Tatuo antes da sessão · 'estudio' = direto no estúdio
+    pagamento_quando TEXT   CHECK (pagamento_quando IN ('app', 'estudio')),
+    pagamento_tipo   TEXT   CHECK (pagamento_tipo IN ('sinal', 'total')),
+    sinal_pct        INTEGER CHECK (sinal_pct BETWEEN 10 AND 100),
+    confirmado_cliente_em  TEXT,
+    confirmado_tatuador_em TEXT,
     criado_em       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
     respondido_em   TEXT,
     CHECK (referencia IS NOT NULL OR descricao <> '' OR flash_id IS NOT NULL)
 );
 
+-- Pagamento feito pelo app. O dinheiro fica RETIDO no Tatuo até cliente e tatuador
+-- confirmarem que a sessão aconteceu; aí é LIBERADO ao tatuador (menos a taxa).
+-- Valores em centavos, para não ter erro de arredondamento.
+CREATE TABLE IF NOT EXISTS pagamento (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    pedido_id       INTEGER NOT NULL REFERENCES pedido (id) ON DELETE CASCADE,
+    tipo            TEXT    NOT NULL CHECK (tipo IN ('sinal', 'total')),
+    metodo          TEXT    NOT NULL CHECK (metodo IN ('pix', 'cartao')),
+    valor_centavos  INTEGER NOT NULL CHECK (valor_centavos > 0),
+    taxa_centavos   INTEGER NOT NULL CHECK (taxa_centavos >= 0),
+    -- pendente = esperando o cliente pagar · retido = pago, guardado no Tatuo
+    -- liberado = repassado ao tatuador · reembolsado = devolvido ao cliente
+    -- cancelado = cobrança abandonada antes de pagar
+    status          TEXT    NOT NULL DEFAULT 'pendente'
+                    CHECK (status IN ('pendente', 'retido', 'liberado', 'reembolsado', 'cancelado')),
+    provedor        TEXT    NOT NULL,
+    provedor_ref    TEXT    NOT NULL UNIQUE,      -- id da cobrança no provedor
+    pix_copia_cola  TEXT,
+    criado_em       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    pago_em         TEXT,
+    encerrado_em    TEXT                          -- quando foi liberado ou reembolsado
+);
+
+-- No máximo uma cobrança "viva" (pendente ou retida) por pedido.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_pagamento_vivo ON pagamento (pedido_id)
+    WHERE status IN ('pendente', 'retido');
 CREATE INDEX IF NOT EXISTS idx_pedido_tatuador ON pedido (tatuador_id, status);
 CREATE INDEX IF NOT EXISTS idx_trabalho_tatuador ON trabalho (tatuador_id);
 CREATE INDEX IF NOT EXISTS idx_flash_tatuador ON flash (tatuador_id);

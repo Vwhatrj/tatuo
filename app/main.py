@@ -12,7 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 from app import auth, config, db
-from app.routers import catalogo, painel, pedidos
+from app.routers import catalogo, pagamentos, painel, pedidos
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
 
@@ -28,11 +28,12 @@ async def ciclo_de_vida(_: FastAPI):
 app = FastAPI(
     title="Tatuo",
     description=(
-        "API do Tatuo: catálogo de tatuadores, pedidos de orçamento, flashes e painel do tatuador.\n\n"
+        "API do Tatuo: catálogo de tatuadores, pedidos de orçamento, flashes, pagamento com custódia "
+        "e painel do tatuador.\n\n"
         "Clientes não têm conta (acompanham o pedido pelo código). "
         "Tatuadores entram pelo botão **Authorize** com e-mail e senha."
     ),
-    version="1.0.0",
+    version="2.0.0",
     lifespan=ciclo_de_vida,
 )
 
@@ -40,6 +41,7 @@ app.include_router(auth.router)
 app.include_router(catalogo.router)
 app.include_router(pedidos.router)
 app.include_router(painel.router)
+app.include_router(pagamentos.router)
 
 
 @app.middleware("http")

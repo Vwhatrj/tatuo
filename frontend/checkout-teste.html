@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout de teste · Tatuo</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/tatuo.css">
+  <script type="module" src="/js/checkout-teste.js"></script>
+</head>
+<body>
+  <main id="conteudo" class="contido" style="max-width:560px;padding:48px 0 64px">
+    <section class="cartao" style="padding:28px;display:grid;gap:18px" id="checkout">
+      <div class="aviso-teste">
+        <p><b>Ambiente de teste.</b> Esta página faz o papel do checkout do provedor de pagamento (como o Mercado Pago). Nenhum dado de cartão é pedido e nenhum dinheiro é cobrado.</p>
+      </div>
+      <div>
+        <p class="sobretitulo">Pagamento com cartão</p>
+        <h1 style="font-size:2.2rem" id="valor">…</h1>
+        <p style="color:var(--tinta-2)" id="descricao"></p>
+      </div>
+      <p class="erro" id="erro" role="alert"></p>
+      <div class="acoes">
+        <button class="botao primario" id="aprovar">Aprovar pagamento (teste)</button>
+        <a class="botao fantasma" id="voltar">Voltar sem pagar</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
